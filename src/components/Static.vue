@@ -2,11 +2,12 @@
     <div class="static_view">
         <div class="container">
 
-            <!--BUTTONS TO SELECT THE TYPE OF EXPENSE-->
+            <!--These buttons change the value of view to show specified expenses-->
             <div style="margin-top: 20px" class="row">
                 <div class="col col-xs-2">
+                    <!-- Buttons change color if selected to show the specified view -->
                     <button v-bind:style="{ 'background-color': showSelectedBG('debt'), color: showSelectedFG('debt') }"
-                        @click="changeView('debt')" class="dynamicTerms">
+                        @click="view = 'debt'" class="dynamicTerms">
                         Debt
                     </button>
                 </div>
@@ -14,7 +15,7 @@
                 <div class="col col-xs-2">
                     <button
                         v-bind:style="{ 'background-color': showSelectedBG('insurance'), color: showSelectedFG('insurance') }"
-                        @click="changeView('insurance')" class="dynamicTerms">
+                        @click="view = 'insurance'" class="dynamicTerms">
                         Insurance
                     </button>
                 </div>
@@ -22,27 +23,27 @@
                 <div class="col col-xs-2">
                     <button
                         v-bind:style="{ 'background-color': showSelectedBG('taxes'), color: showSelectedFG('taxes') }"
-                        @click="changeView('taxes')" class="dynamicTerms">Taxes</button>
+                        @click="view = 'taxes'" class="dynamicTerms">Taxes</button>
                 </div>
                 <div class="col col-xs-2">
                     <button
                         v-bind:style="{ 'background-color': showSelectedBG('utilities'), color: showSelectedFG('utilities') }"
-                        @click="changeView('utilities')" class="dynamicTerms">Utilities</button>
+                        @click=" view = 'utilities'" class="dynamicTerms">Utilities</button>
                 </div>
                 <div class="col col-xs-2">
                     <button
                         v-bind:style="{ 'background-color': showSelectedBG('other'), color: showSelectedFG('other') }"
-                        @click="changeView('other')" class="dynamicTerms">Other</button>
+                        @click="view = 'other'" class="dynamicTerms">Other</button>
                 </div>
                 <div class="col col-xs-2">
                     <button v-bind:style="{ 'background-color': showSelectedBG('all'), color: showSelectedFG('all') }"
-                        @click="changeView('all')" class="dynamicTerms">All</button>
+                        @click="view = 'all'" class="dynamicTerms">All</button>
                 </div>
             </div>
 
+            <!-- This row is used to show the input field -->
             <div class="row">
-
-
+                <!-- Doesn't show the input field if the view is = to show all expenses -->
                 <div v-if="view !== 'all'">
                     <p style="float: left; font-family: 'Roboto'; margin-top: 20px; margin-bottom: -10px">Add {{
                     view
@@ -50,10 +51,13 @@
                         expense...</p>
                     <p style="float: right; font-family: 'Roboto'; margin-top: 20px; margin-bottom: -10px">Yearly
                         {{view}} total: {{usd(getYearly)}}</p>
+
+                    <!-- Input form field to add specific type of expense -->
                     <StaticInputForm :expenseType="view" @addStaticExpense="(exp) => addObjToAppArr(exp)" />
 
                 </div>
 
+                <!-- Shows labels if the array is populated -->
                 <div style="margin-top: 10px;" v-if="getTermArray.length > 0">
                     <Transition name="slide-fade">
                         <div style="margin-top: 20px;" v-if="staticArray.length > 0">
@@ -84,38 +88,45 @@
                     <p>No {{this.view}} expenses...</p>
                 </div>
 
-
+                <!-- Displays all of the expenses in the specific view -->
+                <!-- Uses function getTermArray that returns a specific array of expenses according to the selected view -->
                 <div v-for="exp in getTermArray" :key="exp.id">
                     <StaticRow :remove=removeExpense :name=exp.name :amount=exp.amount :freq=exp.frequency
                         :monthly=exp.monthly :id=exp.id />
                 </div>
 
             </div>
-
         </div>
     </div>
 </template>
 
 <script>
 
+//Imported components
+//These are used to input the expenses and to display them
 import StaticInputForm from './StaticInputForm.vue';
 import StaticRow from './Rows/StaticRow.vue';
+
+//helper functions imported
+import { usd } from '../assets/helper.js'
+
+
+//use for api
 const axios = require('axios')
 const api = 'http://localhost:4000/'
-
 
 export default {
     name: 'static_view',
     props: {
-        staticArr: Array,
+        staticArr: Array, //stored value array passed in from app.vue
     },
     data() {
         return {
             view: 'debt',
-            staticArray: this.staticArr,
+            staticArray: this.staticArr, //assigned prop to this value so that it can be manipulated
         };
     },
-
+    //gets all of the committed expenses from the api endpoint
     mounted() {
         axios.get(api + 'committed')
             .then(res => {
@@ -128,6 +139,7 @@ export default {
     },
 
     computed: {
+        //returns a specific array of expenses according to the selected view 
         getTermArray() {
             let debtArr = this.staticArray.filter(exp => exp.type === 'debt')
             let insArr = this.staticArray.filter(exp => exp.type === 'insurance')
@@ -135,7 +147,6 @@ export default {
             let utlArr = this.staticArray.filter(exp => exp.type === 'utilities')
             let otherArr = this.staticArray.filter(exp => exp.type === 'other')
             let all = this.staticArray;
-
 
             switch (this.view) {
                 case 'debt':
@@ -166,6 +177,7 @@ export default {
         }
     },
     methods: {
+        //computes total expenses in the array
         totalExpenses() {
             let total = 0
             for (var i = 0; i < this.staticArray.length; i++) {
@@ -175,14 +187,13 @@ export default {
             return total
 
         },
-        changeView(view) {
-            this.view = view;
-        },
+        //staticInputForm returns object and that object is added to the array here
         addObjToAppArr(obj) {
             this.staticArray.push(obj)
             this.totalExpenses()
-            
         },
+
+        //used to remove see income vue for more information as to how this works
         removeExpense(id) {
             if (
                 confirm("Are you sure you want to delete this source of income?") ===
@@ -208,6 +219,7 @@ export default {
 
             }
         },
+        //returns a color to specify which view is selected
         showSelectedBG(view) {
             if (this.view === view) {
                 return 'rgba(28, 111, 23, 0.8)'
@@ -215,6 +227,7 @@ export default {
                 return '#FFFFFF'
             }
         },
+        //returns a color to specify which view is selected
         showSelectedFG(view) {
             if (this.view === view) {
                 return '#FFFFFF'
@@ -222,14 +235,10 @@ export default {
                 return 'rgba(28, 111, 23, 0.8)'
             }
         },
+
+        //calls helper function and formats
         usd(money) {
-            // Create our number formatter.
-            var formatter = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-                minimumFractionDigits: 2,
-            });
-            return formatter.format(money);
+            return usd(money)
         },
 
     },
