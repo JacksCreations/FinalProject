@@ -41,7 +41,7 @@
 
 <script>
 
-import { monthly } from '../assets/formatter.js'
+import { monthly } from '../assets/helper.js'
 import { v4 as uuidv4 } from "uuid";
 
 const axios = require('axios')

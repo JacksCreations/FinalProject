@@ -36,7 +36,7 @@
 </template>
 
 <script>
-// import { StaticExpense } from "@/model/ExpenseModel";
+
 import { v4 as uuidv4 } from "uuid";
 
 const axios = require('axios')
