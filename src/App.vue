@@ -10,15 +10,15 @@
         </div>
 
         <div class="col-3">
-          <button class="navButtons" @click="changeView('static')">COMMITTED</button>
+          <button class="navButtons" style="background-color: rgb(239, 226, 106)" @click="changeView('static')">COMMITTED</button>
         </div>
 
         <div class="col-3">
-          <button class="navButtons" @click="changeView('control')">WEEKLY</button>
+          <button class="navButtons" style="background-color: rgb(56, 79, 239)" @click="changeView('control')">WEEKLY</button>
         </div>
 
         <div class="col-3">
-          <button class="navButtons" @click="changeView('dynamic')">FUTURE</button>
+          <button class="navButtons" style="background-color: rgb(236, 46, 67)" @click="changeView('dynamic')">FUTURE</button>
         </div>
 
       </div>
