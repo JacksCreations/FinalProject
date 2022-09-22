@@ -1,8 +1,8 @@
 <template>
     <div id="income_view">
-        <!-- INPUT INCOME SOURCES SECTION -->
         <div class="container-fluid" style="width: 100%; float: center">
 
+            <!--This form is used to collect data to create an income object that we then post to the api for storage-->
             <p style="float: left; font-family: 'Roboto'; margin-top: 5px; margin-bottom: 5px">Add a source of income...
             </p>
             <form>
@@ -36,6 +36,7 @@
                 </div>
             </form>
 
+            <!--If there are income values in the array, these labels are animated and displayed -->
             <div class="row">
                 <Transition name="slide-fade">
                     <div style="margin-top: 20px;" v-if="incomeArray.length > 0">
@@ -62,68 +63,55 @@
                     </div>
                 </Transition>
 
+                <!-- Each income in the income array is displayed using a for loop -->
                 <div v-for="income in incomeArray" :key="income.id">
-                    <IncomeRow :name="income.incomeName" :amount="usd(income.incomeAmount)"
-                        :freq="income.incomeFrequency" :remove=removeSourceOfIncome
-                        :id=income.id :monthly=income.incomeMonthly></IncomeRow>
+
+                    <!-- Here we use our income row component in the for loop to display each income as a vue -->
+                    <IncomeRow :name="income.incomeName" :amount="formatUSD(income.incomeAmount)"
+                        :freq="income.incomeFrequency" :remove=removeSourceOfIncome :id=income.id
+                        :monthly=income.incomeMonthly></IncomeRow>
                 </div>
             </div>
-
         </div>
     </div>
 </template>
 
 <script>
-import { v4 as uuidv4 } from "uuid";
+
+//Imported component used for displaying the objects in rows
 import IncomeRow from "./Rows/IncomeRow.vue";
+
+//used to assign id to the object
+import { v4 as uuidv4 } from "uuid";
+
+//helper functions imported
+import { monthly, usd } from '../assets/helper.js'
+
+//used for calling api
 const axios = require('axios')
 const API_URL = 'http://localhost:4000/'
-
-function monthly(freq, amount) {
-        if (freq.toLowerCase() === "weekly") {
-            const yearly = amount* 52;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "bi-weekly") {
-            const yearly = amount* 26;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "semi-monthly") {
-            const yearly = amount* 24;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "monthly") {
-            const yearly = amount* 12;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "quarterly") {
-            const yearly = amount* 4;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "semi-annually") {
-            const yearly = amount* 2;
-            return yearly / 12;
-        } else if (freq.toLowerCase() === "annually") {
-            const yearly = amount* 1;
-            return yearly / 12;
-        } else {
-            return 0;
-        }
-    }
 
 export default {
     name: "income_view",
     components: {
-        IncomeRow,
+        IncomeRow, //used to display the income objects
     },
+    //Data array stored in app.vue is passed in so that this component can manipulate the array
     props: {
         appIncomeArray: Array,
     },
     data() {
         return {
+            //Values stored for input used to create objects
             inputName: "",
             inputAmount: "",
             inputFrequency: "",
+            //the array passed in as a prop is assigned to a value here so that it can be manipulated directly
             incomeArray: this.appIncomeArray,
         };
     },
 
-    //This pulls the income sources from the api and displays them
+    //This pulls the income sources from the api and assigns it to our local array
     mounted() {
         axios.get(API_URL + 'income')
             .then(res => {
@@ -134,10 +122,8 @@ export default {
                 console.log(error);
             });
     },
-    computed: {
-        
-    },
     methods: {
+        //Computes the total income from all of the income objects in the income array
         totalIncome() {
             let total = 0;
             if (this.incomeArray?.length) {
@@ -147,11 +133,12 @@ export default {
             } else {
                 return 0;
             }
-            this.$emit("getTotalIncome", total);
+            this.$emit("getTotalIncome", total); //emits the total although I believe that this could be done solely in the app.vue
             return total;
         },
+        //This function adds an income object to the array and DB
         addIncome() {
-            
+            //We take all inputted values and create an object
             const income = {
                 id: uuidv4(),
                 incomeName: this.inputName,
@@ -159,43 +146,36 @@ export default {
                 incomeFrequency: this.inputFrequency,
                 incomeMonthly: parseFloat(monthly(this.inputFrequency, this.inputAmount).toFixed(2))
             };
+            //this object is then pushed to the array
             this.incomeArray.push(income);
 
-            //post income to api
+            //posts the object to the api
             axios.post(API_URL + 'add/income', income)
                 .then(response => this.income.id = response.data.id)
 
+            this.totalIncome() //recomputes the total income
 
-            this.totalIncome()
-            this.resetFields();
-        },
-        resetFields() {
+            //clears the input fields
             this.inputName = "";
             this.inputAmount = "";
             this.inputFrequency = "";
         },
-        usd(money) {
-            // Create our number formatter.
-            var formatter = new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-                minimumFractionDigits: 2,
-            });
-            return formatter.format(money);
-        },
+
+        //This function is passed into the income row component and activated by a button click to remove the income from the array and the database
         removeSourceOfIncome(id) {
             if (
                 confirm("Are you sure you want to delete this source of income?") ===
                 true
             ) {
+                //finds the correct income in the array
                 let index = 0;
                 for (var i = 0; i < this.incomeArray.length; i++) {
-                    if (this.incomeArray[i].id === id) {
+                    if (this.incomeArray[i].id === id) { //searches for it by id
                         index = i;
                         break;
                     }
                 }
-
+                //removes the income from the array
                 this.incomeArray.splice(index, 1);
 
                 //Calls api delete requests and removes source of income from the DB with specific ID
@@ -209,6 +189,11 @@ export default {
                 this.totalIncome()
             }
         },
+        //Function is used to format number to usd
+        formatUSD(number) {
+            //calls in usd from helper function and returns number in currency format
+            return usd(number)
+        }
     },
 };
 
