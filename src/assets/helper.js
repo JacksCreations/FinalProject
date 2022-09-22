@@ -1,3 +1,4 @@
+//Takes in a frequency and amount and returns how much that is per month
 export function monthly(freq, amount) {
   if (freq.toLowerCase() === "weekly") {
     const yearly = amount * 52;
@@ -25,6 +26,7 @@ export function monthly(freq, amount) {
   }
 }
 
+//Sums the value of monthly amount in an object array
 export function getTotalExpensesFromBucket(objArr) {
   let total = 0.0;
   for (var i = 0; i < objArr.length; i++) {
@@ -33,12 +35,13 @@ export function getTotalExpensesFromBucket(objArr) {
   return total;
 }
 
+//formats number to us currency
 export function usd(money) {
   // Create our number formatter.
   var formatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
   });
   return formatter.format(money);
 }

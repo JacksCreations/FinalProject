@@ -2,7 +2,7 @@
     <div id="controlView">
         <div class="container-fluid">
 
-            <!-- CONTROL ROW -->
+            <!-- This form takes input to create a weekly expense object -->
             <p style="float: left; font-family: 'Roboto'; margin-top: 5px; margin-bottom: 4px">Add a weekly
                 expense...</p>
             <form>
@@ -35,7 +35,8 @@
                     </div>
                 </div>
             </form>
-            <!-- ROW LABELS -->
+
+            <!-- If the array is populated the labels are animated and shown -->
             <div class="row">
                 <Transition name="slide-fade">
                     <div style="margin-top: 20px; margin-left: -15px;" v-if="controlArray.length > 0">
@@ -62,31 +63,28 @@
                     </div>
                 </Transition>
 
+                <!-- For each expense in the array the object is displayed using a view component -->
                 <div v-for="exp in controlArray" :key="exp.id">
                     <StaticRow :remove=removeExpense :name=exp.name :amount=exp.amount :freq=exp.frequency
                         :monthly=exp.monthly :id=exp.id />
                 </div>
-
             </div>
-
         </div>
-
-
-
-
     </div>
-
 </template>
 
 <script>
+
+//view component imported
 import StaticRow from './Rows/StaticRow.vue';
+
+//helper functions
 import { monthly } from '../assets/helper.js'
 import { v4 as uuidv4 } from "uuid";
 
+//used for api
 const axios = require('axios')
 const api = 'http://localhost:4000/'
-
-
 
 export default {
     name: "controlView",
@@ -101,10 +99,12 @@ export default {
     props: {
         appControlArray: Array,
     },
+    components: { StaticRow }, // used for displaying objects in for loop
+    //gets all weekly expense objects from the api
     mounted() {
         axios.get(api + 'weekly')
             .then(res => {
-                this.controlArray = res.data
+                this.controlArray = res.data //assigns those objects to local array
                 this.totalExpenses()
             })
             .catch(function (error) {
@@ -112,6 +112,22 @@ export default {
             });
     },
     methods: {
+        //Methods are same as static vue.. See static.vue for more info
+        totalExpenses() {
+            let total = 0;
+            let monthly = 0;
+            if (this.controlArray?.length) {
+                for (var i = 0; i < this.controlArray.length; i++) {
+                    total += this.controlArray[i].amount;
+                    monthly += this.controlArray[i].monthly;
+                }
+            }
+            else {
+                return total;
+            }
+            this.$emit("getControlTotal", monthly);
+            return monthly;
+        },
         addControlExpense() {
             const exp = {
                 id: uuidv4(),
@@ -157,25 +173,7 @@ export default {
                 this.totalExpenses()
             }
         },
-
-        totalExpenses() {
-            let total = 0;
-            let monthly = 0;
-            if (this.controlArray?.length) {
-                for (var i = 0; i < this.controlArray.length; i++) {
-                    total += this.controlArray[i].amount;
-                    monthly += this.controlArray[i].monthly;
-                }
-            }
-            else {
-                return total;
-            }
-            this.$emit("getControlTotal", monthly);
-            return monthly;
-        },
-    },
-
-    components: { StaticRow }
+    }
 }
 
 
